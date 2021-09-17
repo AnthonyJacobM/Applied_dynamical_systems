@@ -111,9 +111,9 @@ class AnnotatedFunction:
         return self.func(*args, **kwargs)
 
 # The logistic map, f(x) = rx(1-x).
-func = AnnotatedFunction(lambda x,r: r*x*(1-x), r'$rx(1-x)$')
-#plot_cobweb(func, 2.8, 0.2, save_bool = True)
-#plot_cobweb(func, 3.8, 0.2, 200, save_bool = True)
+logistic = AnnotatedFunction(lambda x,r: r*x*(1-x), r'$rx(1-x)$')
+#plot_cobweb(logistic, 2.8, 0.2, save_bool = True)
+#plot_cobweb(logistic, 3.8, 0.2, 200, save_bool = True)
 
 #create_folder(name = folder_name)
 def generate_cobweb_figures(f, r, x0, nmax, x_low, x_high, n_x, r_low, r_high, n_r, model = 'logistic'):
@@ -143,7 +143,7 @@ def generate_cobweb_figures(f, r, x0, nmax, x_low, x_high, n_x, r_low, r_high, n
 
 
 
-#generate_cobweb_figures(f = func, r = 0, x0 = 0.2, nmax = 40, x_low = 0, x_high = 1, n_x = 500, r_low = 0, r_high = 4, n_r = 100, model = 'logistic')
+#generate_cobweb_figures(f = logistic, r = 0, x0 = 0.2, nmax = 40, x_low = 0, x_high = 1, n_x = 500, r_low = 0, r_high = 4, n_r = 100, model = 'logistic')
 
 
 import moviepy
@@ -260,4 +260,58 @@ def plot_cobweb_sine(sine_curve, x0, nmax = 40, x_low = 0, x_high = 10, n_x = 10
     return py
 
 
-plot_cobweb_sine(sine_curve, x0 = 0, x_high = 1, x_low = -1)
+#plot_cobweb_sine(sine_curve, x0 = 0, x_high = 1, x_low = -1)
+
+
+# reference:
+# https://ipython-books.github.io/121-plotting-the-bifurcation-diagram-of-a-chaotic-dynamical-system/
+def plot_bifurcation(model = 'logistic', r_low = 2.5, r_high = 4, n_r = 10000, n_f = 100, x0 = 1e-5, lyap_bool = False):
+    """
+    function to plot thd bifurcation of a 1 dimensional map
+    :param model: logistic
+    :param r_low: low value of r array
+    :param r_high: high value of r array
+    :param n_r: number of iterations over r array
+    :param n_f: taking the last n_f of the iterations and plotting in the bifurcation plot
+    :param x0: initial condition
+    :param lyap_bool: boolean for the lyapunov coefficient plotted
+    :return: plottedd bifurcation figure with a lyapunov coefficient
+    """
+    if model == 'logistic':
+        func = logistic
+    else: # identity function!
+        func = lambda x, r: 1
+
+    if lyap_bool == True:
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 9), sharex=True)
+
+    else:
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1, 1, 1)
+
+    x = np.ones(n_r) * x0 # intialize an array with the same intial conditions for each of the iterations
+    r = np.linspace(r_low, r_high, n_r) # number of iterations over "r" array...
+    lyap = np.zeros(n_r) # first order lyapunov coefficient is the omega limit of the sum of the log of the partial of the rhs divided by the number of iterations
+
+    # for each initial condition, generate the LHS of the map
+    for i in range(n_r):
+        x = func(x, r)
+        # compute the lyapunov coefficient.... -- sum of the log of the partial in rhs..
+        if lyap_bool == True:
+            lyap += np.log(abs(r - 2 * r * x))
+        # plot the bifurcation over the final iterations.
+        if i>= (n_r - n_f):
+            ax1.plot(r, x, ',k', alpha = 0.25)
+            ax1.set_xlim(r_low, r_high)
+            ax1.set_title('Bifurcation Diagram', fontsize=18)
+        if lyap_bool == True:
+            ax2.axhline(0, color = 'k', lw = 0.5, alpha = 0.5)
+            ax2.plot(r[lyap < 0], lyap[lyap < 0] / n_r, '.k', alpha = 0.5, lw = 0.5)
+            ax2.plot(r[lyap >= 0], lyap[lyap >= 0] / n_r, '.r', alpha = 0.5, lw = 0.5)
+            ax2.set_xlim([r_low, r_high])
+            ax1.set_title('Bifurcation Diagram', fontsize=18)
+            ax2.set_title('Lyapunov Coefficient', fontsize=18)
+
+    plt.show()
+
+plot_bifurcation(lyap_bool=True)
