@@ -213,6 +213,8 @@ def run_simulation(tf = 100, N = 1000):
             dict= case_e
         elif option == 'case_cool_1':
             dict = case_cool_1
+        else:
+            flag = 0
         plot_solution(dict = dict, tf = tf, N = N)
 
 
